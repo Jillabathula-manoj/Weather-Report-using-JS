@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Report with Map</title>
+    <style>
+        #map {
+            height: 380px;
+            width: 100%;
+        }
+    </style>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+</head>
+<body>
+    <div id="map"></div>
+    
+    <div>
+        <label for="cityInput">Enter City Name:</label>
+        <input type="text" id="cityInput">
+        <button onclick="searchByCity()">Search</button>
+    </div>
+
+    <div id="weather-report">
+        <h2>Weather Report</h2>
+        <p id="temperature"></p>
+        <p id="description"></p>
+        <p id="humidity"></p>
+        <p id="city"></p>
+    </div>
+
+
+    <!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+
+<script>
+    var map = L.map('map').setView([20.5937, 78.9629], 5);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+ 
+
+    
+    map.on('click', async function (e) {
+        var lat = e.latlng.lat;
+        var lng = e.latlng.lng;
+        await fetchWeatherData(lat, lng);
+    });
+
+    async function searchByCity(){
+        var city = document.getElementById('cityInput').value;
+        if (city.trim() !== '') {
+            await fetchWeatherByCity(city);
+        }
+    }
+
+    async function fetchWeatherData(lat, lng) {
+        try {
+            var apiKey = 'fc2ef4dacc6ede608fcfa47feebbe43b';
+            var apiUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${apiKey}&units=metric`;
+
+            const response = await fetch(apiUrl);
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const data = await response.json();
+            updateWeatherData(data);
+        } catch (error) {
+            console.error('Error fetching weather data:', error);
+            displayError();
+        }
+    }
+    
+    async function fetchWeatherByCity(city) {
+        try {
+            var apiKey = 'fc2ef4dacc6ede608fcfa47feebbe43b';
+            var apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
+
+            const response = await fetch(apiUrl);
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const data = await response.json();
+            var lat = data.coord.lat;
+            var lng = data.coord.lon;
+            map.setView([lat, lng], 10);
+            updateWeatherData(data);
+        } catch (error) {
+            console.error('Error fetching weather data:', error);
+            displayError();
+        }
+    }
+
+    function updateWeatherData(data){
+        var temperature = data.main.temp;
+        var description = data.weather[0].description;
+        var humidity = data.main.humidity;
+        var city = data.name;
+
+        document.getElementById('temperature').innerHTML = `Temperature: ${temperature} °C`;
+        document.getElementById('description').innerHTML = `Description: ${description}`;
+        document.getElementById('humidity').innerHTML = `Humidity: ${humidity}%`;
+        document.getElementById('city').innerHTML = `City: ${city}`;
+    }
+    function displayError() {
+        document.getElementById('weather-report').innerHTML = 'Error fetching weather data';
+    }
+    
+</script>
+
+</body>
+</html>
+
+
+
